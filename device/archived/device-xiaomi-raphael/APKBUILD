@@ -11,16 +11,29 @@ arch="aarch64"
 _carch="arm64"
 options="!check !archcheck"
 depends="
-	linux-xiaomi-raphael
+  alsa-ucm-conf
+	linux-postmarketos-qcom-sm8150
 	mkbootimg
 	postmarketos-base
 	mesa-vulkan-freedreno
+	make-dynpart-mappings
+	msm-modem
+	tqftpserv
+	qbootctl
+	systemd-boot
+	swclock-offset
 "
 makedepends="devicepkg-dev"
 source="
 	deviceinfo
 	kernel-cmdline.conf
 	modules-initfs
+	HiFi.conf
+	xiaomi-XiaomiRedmiK20Pro.conf
+  sm8150_raphael.conf
+	Raphael.conf
+	51-disable-suspension.conf
+	ath10k.conf
 "
 
 subpackages="
@@ -34,28 +47,32 @@ build() {
 
 package() {
 	devicepkg_package $startdir $pkgname
+
+	install	-Dm644 "$srcdir"/xiaomi-XiaomiRedmiK20Pro.conf -t \
+		"$pkgdir"/usr/share/alsa/ucm2/conf.d/sm8150_raphael/
+
+	install	-Dm644 "$srcdir"/HiFi.conf -t \
+		"$pkgdir"/usr/share/alsa/ucm2/Raphael
+	install	-Dm644 "$srcdir"/HiFi.conf -t \
+		"$pkgdir"/usr/share/alsa/ucm2/conf.d/sm8150_raphael/
+	install	-Dm644 "$srcdir"/sm8150_raphael.conf -t \
+		"$pkgdir"/usr/share/alsa/ucm2/conf.d/sm8150_raphael/
+	install	-Dm644 "$srcdir"/Raphael.conf -t \
+		"$pkgdir"/usr/share/alsa/ucm2/Raphael/
+	mkdir -p "$pkgdir"/etc/wireplumber/wireplumber.conf.d
+	cp "$srcdir"/51-disable-suspension.conf "$pkgdir"/etc/wireplumber/wireplumber.conf.d/
+	mkdir -p "$pkgdir"/etc/modprobe.d/
+	cp "$srcdir"/ath10k.conf "$pkgdir"/etc/modprobe.d/
 }
 
 nonfree_firmware() {
 	pkgdesc="Firmware for GPU, WiFi, etc."
 	depends="
 		firmware-xiaomi-raphael
-		firmware-xiaomi-raphael-adreno
-		firmware-xiaomi-raphael-adsp
-		firmware-xiaomi-raphael-ath10k
-		firmware-xiaomi-raphael-bluetooth
-		firmware-xiaomi-raphael-camera
-		firmware-xiaomi-raphael-cdsp
-		firmware-xiaomi-raphael-ipa
-		firmware-xiaomi-raphael-slpi
-		firmware-xiaomi-raphael-modem
-		firmware-xiaomi-raphael-touchscreen
-		firmware-xiaomi-raphael-venus
-		firmware-xiaomi-raphael-wlan
 		linux-firmware-ath10k
 		linux-firmware-qcom
 		msm-modem
-		pd-mapper
+		qbootctl
 		tqftpserv
 "
 	mkdir "$subpkgdir"
@@ -64,13 +81,19 @@ nonfree_firmware() {
 nonfree_firmware_openrc() {
 	install_if="$pkgname-nonfree-firmware=$pkgver-r$pkgrel openrc"
 	install="$subpkgname.post-install"
-	depends="openrc"
+	depends="openrc qbootctl-openrc tqftpserv-openrc"
 
 	mkdir "$subpkgdir"
 }
 
 sha512sums="
-5a4790e6c3c1070a19ffc2cfb18e49905c420ced11317cd468c0f4db4767c9b57290d1fadd822005d185f7cbc75b9bf362db401d552d9c0af53cf2de6f2df461  deviceinfo
-42d3a47ebc8109fc3bf1ac03ddae6254ca9bc7b0a64f58cfe652b30a40bdceddf09fd65a46fddeda0138d8b52dbccc2425da06f7705373f4a4ab0babaa35b150  kernel-cmdline.conf
+9eb5122bf0be6a1da5323fb4d117da966991db6277f66d4e230837ed7ace8c6c06a83576903d23f698649a42ea07d5cbc5060dea5c429d2e0a3b206fb79af0af  deviceinfo
+003e5228a2b2825f24cb8b4842e3c3f72b99225f0aef3cda5bb2de4e4beb5e1c84800ba48c6cf1b84fe042bd039912e67c545c00981b604db0c0f0bcb546f7c5  kernel-cmdline.conf
 d81350bb2c594d1c922b4eaa5f7ddd94ff5c52d915b6b34e01be2fddc5d624dea77343fab9b168acf889b55daa80a5deace6b81366d579816d5cc73b543a6826  modules-initfs
+d7e01d99abf158e501120c71fb2acfd58d0e8d0425d0d94577fe4fbd1ba97271be8479f147deec3f811b149f0087296a394799bc699fa3d80019af23db2b73d6  HiFi.conf
+3c48e15f893886c87e2578a135306ce00c7ec251a75a1d87503619f9bf314a4bc6894686658c751aa40b47dcead3cf58c499442c9bddb3e47357266452325045  xiaomi-XiaomiRedmiK20Pro.conf
+bb8bd4edc01066ff5a25f9cfb425ac4d0c15279844ee8dcacc329462f93c54e73344d6a140bb1706465708d8d8fb6c7b0d846631e3fd76c9b85748fffe530980  sm8150_raphael.conf
+bb8bd4edc01066ff5a25f9cfb425ac4d0c15279844ee8dcacc329462f93c54e73344d6a140bb1706465708d8d8fb6c7b0d846631e3fd76c9b85748fffe530980  Raphael.conf
+28c14f47eaedec577d152001c51753537c98f267ac4a0acf78a304efebe5f6a1b4dc6d501497da9a0a925806a1d9c80b25e001cf9b1eb21efa22cd6a41ff753b  51-disable-suspension.conf
+15ec21d974671bd0c3b59609254d23e94d580e52d7548467d99611ff4fdadabb72f99868fc5a162fda47b812b08861da9ae7ca8a14c05a434abd57e24290e8fe  ath10k.conf
 "
